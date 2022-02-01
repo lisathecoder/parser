@@ -13,12 +13,11 @@ OUTPUT_FILES = {
     'REPORT': 'parsed/report.csv',
     'SUMMARY': 'parsed/summary.txt'
 }
-INPUT_LEN = 4 
 
 # read the input file and returns a list of input
 def getContents(fileName) -> list:
     f = open(fileName, "r")
-    content = f.readlines()
+    content = [line.strip() for line in f if line.strip()]
     content = [x.strip() for x in content]
     f.close()
     return content
@@ -77,23 +76,24 @@ def getParsedData(filename) -> list:
     content = getContents(filename)
     parsedData = []
     for line in content:
-        row = line.split('&')
-        numInputs = len(row)-1
-        for i in range(numInputs, INPUT_LEN): 
-            row.append('')
-        key, inputs = row[0], [row[1], row[2], row[3]]
         count = 0
-        for item in definition[key]:
-            inputType = checkInputType(inputs[count])
-            expectedType = definition[key][item]['data_type']
-            inputLength = len(inputs[count])
-            expectedLength = definition[key][item]['max_length']
-            isMissing = numInputs <= count
-            errorCode = checkErrors(inputType, expectedType, inputLength, expectedLength, isMissing)
-            if inputLength == 0: 
-                inputLength = ''
-            parsedData.append([key, item, inputType, expectedType, inputLength, expectedLength, errorCode])
-            count += 1
+        inputs = line.split('&')
+        key = inputs.pop(0)
+        numInputs = len(inputs)
+        if key in definition.keys():
+            for i in range(numInputs, len(definition[key])): 
+                inputs.append('')
+            for item in definition[key]:
+                inputType = checkInputType(inputs[count])
+                expectedType = definition[key][item]['data_type']
+                inputLength = len(inputs[count])
+                expectedLength = definition[key][item]['max_length']
+                isMissing = numInputs <= count
+                errorCode = checkErrors(inputType, expectedType, inputLength, expectedLength, isMissing)
+                if inputLength == 0: 
+                    inputLength = ''
+                parsedData.append([key, item, inputType, expectedType, inputLength, expectedLength, errorCode])
+                count += 1
     return parsedData
 
 # print result data in a csv file
